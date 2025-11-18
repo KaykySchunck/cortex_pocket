@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  cortex-app:
+    build: .
+    container_name: cortex-pocket-app
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
