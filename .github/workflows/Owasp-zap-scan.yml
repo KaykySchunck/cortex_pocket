@@ -42,12 +42,8 @@ jobs:
 
       - name: Run OWASP ZAP Scan
         run: |
-          # IDENTIFIQUE O NOME DA REDE DO DOCKER-COMPOSE
-          NETWORK_NAME=$(docker network ls | grep appnet | awk '{print $2}')
-          echo "📡 Usando rede: $NETWORK_NAME"
-
           docker run --rm \
-            --network=$NETWORK_NAME \
+            --network=zapnet \
             -v $(pwd)/zap-reports:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-full-scan.py \
@@ -87,5 +83,6 @@ jobs:
     steps:
       - name: OK
         run: echo "✔ Nenhuma vulnerabilidade crítica ou média encontrada."
+
 
 
