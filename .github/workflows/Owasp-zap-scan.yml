@@ -17,15 +17,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start application with Docker Compose
+      - name: Build and Start App with Docker Compose
         run: |
           docker compose up -d --build
-          echo "Aguardando app container subir..."
+          echo "Aguardando aplicação iniciar..."
           sleep 15
 
       - name: Validate app is running
         run: |
           curl -I http://localhost:8081 || exit 1
+
 
   zap_scan:
     name: OWASP ZAP DAST Scan
@@ -36,24 +37,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create reports directory
+      - name: Create report directory
         run: mkdir zap-reports
 
-      - name: Run OWASP ZAP Full Scan
+      - name: Run OWASP ZAP Scan
         run: |
+          # IDENTIFIQUE O NOME DA REDE DO DOCKER-COMPOSE
+          NETWORK_NAME=$(docker network ls | grep appnet | awk '{print $2}')
+          echo "📡 Usando rede: $NETWORK_NAME"
+
           docker run --rm \
-            --network="host" \
+            --network=$NETWORK_NAME \
             -v $(pwd)/zap-reports:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-full-scan.py \
-            -t http://localhost:8081 \
+            -t http://cortex-pocket-app:8081 \
             -r zap-report.html \
             -w zap-report.md \
             -J zap-report.json \
             -x zap-report.xml \
             -d
 
-      - name: Upload ZAP Reports
+      - name: Upload Reports
         uses: actions/upload-artifact@v4
         with:
           name: zap-reports
@@ -64,13 +69,14 @@ jobs:
           HIGH=$(jq '[.site[].alerts[] | select(.riskcode == "3")] | length' zap-reports/zap-report.json)
           MEDIUM=$(jq '[.site[].alerts[] | select(.riskcode == "2")] | length' zap-reports/zap-report.json)
 
-          echo "Vulnerabilidades HIGH: $HIGH"
-          echo "Vulnerabilidades MEDIUM: $MEDIUM"
+          echo "Vulnerabilities HIGH: $HIGH"
+          echo "Vulnerabilities MEDIUM: $MEDIUM"
 
           if [ "$HIGH" -gt 0 ] || [ "$MEDIUM" -gt 0 ]; then
-            echo "❌ Vulnerabilidades encontradas!"
+            echo "❌ Vulnerabilities detected!"
             exit 1
           fi
+
 
   summary:
     name: Summary
@@ -79,6 +85,7 @@ jobs:
     if: success()
 
     steps:
-      - name: Security Approved
+      - name: OK
         run: echo "✔ Nenhuma vulnerabilidade crítica ou média encontrada."
+
 
