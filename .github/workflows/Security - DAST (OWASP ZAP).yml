@@ -1,0 +1,56 @@
+name: Security - DAST (OWASP ZAP)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  zap-dast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create docker network
+        run: docker network create zapnet
+
+      - name: Build your app image
+        run: docker build -t cortex-pocket:latest .
+
+      - name: Run your application container
+        run: |
+          docker run -d \
+            --name cortex-pocket-app \
+            --network zapnet \
+            -p 8081:8081 \
+            cortex-pocket:latest
+
+      - name: Wait for app
+        run: |
+          echo "Waiting for app..."
+          sleep 20
+          curl -I http://localhost:8081
+
+      - name: Create report folder
+        run: mkdir zap-reports
+
+      - name: Run OWASP ZAP Full Scan
+        run: |
+          docker run --rm \
+            --network=zapnet \
+            -v $(pwd)/zap-reports:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-full-scan.py \
+            -t http://cortex-pocket-app:8081 \
+            -d \
+            -r zap-report.html \
+
+      - name: Upload ZAP Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-reports
+          path: zap-reports
