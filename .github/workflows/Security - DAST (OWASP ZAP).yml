@@ -1,89 +1,75 @@
-name: DAST - OWASP ZAP
+name: DAST - OWASP ZAP Scan
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+  workflow_dispatch:
 
 jobs:
   dast:
     runs-on: ubuntu-latest
 
     steps:
-    # -----------------------------------------
+    # ------------------------------
     # 1. Checkout do código
-    # -----------------------------------------
+    # ------------------------------
     - name: Checkout
       uses: actions/checkout@v4
 
-    # -----------------------------------------
-    # 2. Build da imagem do seu projeto
-    # -----------------------------------------
-    - name: Build Cortex Pocket image
+    # ------------------------------
+    # 2. Criar rede Docker
+    # ------------------------------
+    - name: Create Docker network
+      run: docker network create cortexnet
+
+    # ------------------------------
+    # 3. Build da imagem Docker
+    # ------------------------------
+    - name: Build Docker Image
       run: docker build -t cortex-pocket:latest .
 
-    # -----------------------------------------
-    # 3. Subir o container
-    # -----------------------------------------
-    - name: Run application container
+    # ------------------------------
+    # 4. Subir o container da aplicação
+    # ------------------------------
+    - name: Run Container
       run: |
-        docker network create cortexnet || true
-
         docker run -d \
           --name cortex-pocket-app \
           --network cortexnet \
           -p 8081:8081 \
           cortex-pocket:latest
 
-    # -----------------------------------------
-    # 4. Mostrar logs imediatamente
-    # (Se morrer, a gente vê o motivo)
-    # -----------------------------------------
-    - name: Show container logs
+    # ------------------------------
+    # 5. Ver logs (debug, opcional)
+    # ------------------------------
+    - name: Show Container Logs
       run: docker logs cortex-pocket-app || true
 
-    # -----------------------------------------
-    # 5. Verificar status do container
-    # -----------------------------------------
-    - name: Check container status
-      run: |
-        echo "📌 Containers ativos:"
-        docker ps -a
-
-    # -----------------------------------------
-    # 6. Aguardar a aplicação subir
-    # Com tentativas e tempo extra
-    # -----------------------------------------
-    - name: Wait for app to start
+    # ------------------------------
+    # 6. Aguardar app subir
+    # ------------------------------
+    - name: Wait for app
       run: |
         echo "⏳ Aguardando aplicação subir..."
-        for i in {1..10}; do
-          if curl -Is http://localhost:8081 >/dev/null; then
-            echo "✅ Aplicação está no ar!"
-            exit 0
-          fi
-          echo "Tentativa $i falhou, aguardando..."
-          sleep 5
-        done
-        echo "❌ A aplicação NÃO iniciou!"
-        docker logs cortex-pocket-app || true
-        exit 1
+        sleep 20
+        curl -I http://localhost:8081 || exit 1
 
-    # -----------------------------------------
-    # 7. Criar pasta de relatórios
-    # -----------------------------------------
+    # ------------------------------
+    # 7. Criar diretório para relatórios
+    # ------------------------------
     - name: Create reports folder
       run: mkdir zap-reports
 
-    # -----------------------------------------
+    # ------------------------------
     # 8. Rodar OWASP ZAP Full Scan
-    # -----------------------------------------
-    - name: Run OWASP ZAP Full Scan
+    # ------------------------------
+    - name: OWASP ZAP Full Scan
       run: |
         docker run --rm \
-          --network=cortexnet \
+          --user root \
+          --network cortexnet \
           -v $(pwd)/zap-reports:/zap/wrk \
           ghcr.io/zaproxy/zaproxy:stable \
           zap-full-scan.py \
@@ -94,11 +80,17 @@ jobs:
             -x zap-report.xml \
             -d
 
-    # -----------------------------------------
+    # ------------------------------
     # 9. Upload dos relatórios
-    # -----------------------------------------
+    # ------------------------------
     - name: Upload ZAP Reports
       uses: actions/upload-artifact@v4
       with:
         name: zap-reports
         path: zap-reports
+
+    # ------------------------------
+    # 10. Cleanup
+    # ------------------------------
+    - name: Cleanup
+      run: docker rm -f cortex-pocket-app || true
