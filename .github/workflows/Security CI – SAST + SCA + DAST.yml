@@ -8,31 +8,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  security:
+
+  # ==========================================================
+  # 1️⃣ JOB: BUILD DO CONTAINER + SUBIR APLICAÇÃO LOCAL
+  # ==========================================================
+  build:
+    name: Build & Run Container
     runs-on: ubuntu-latest
 
     steps:
-    # ------------------------------
-    # 1. Checkout do código
-    # ------------------------------
     - name: Checkout
       uses: actions/checkout@v4
 
-    # ------------------------------
-    # 2. Criar rede Docker
-    # ------------------------------
     - name: Create Docker network
       run: docker network create cortexnet
 
-    # ------------------------------
-    # 3. Build da imagem do seu projeto
-    # ------------------------------
     - name: Build Cortex Pocket image
       run: docker build -t cortex-pocket:latest .
 
-    # ------------------------------
-    # 4. Subir container da aplicação
-    # ------------------------------
     - name: Run application container
       run: |
         docker run -d \
@@ -41,23 +34,37 @@ jobs:
           -p 8081:8081 \
           cortex-pocket:latest
 
-    # ------------------------------
-    # 5. Aguardar app iniciar
-    # ------------------------------
-    - name: Wait for app
+    - name: Wait for app to start
       run: |
-        echo "Aguardando aplicação subir..."
+        echo "⏳ Aguardando aplicação subir..."
         sleep 20
         curl -I http://localhost:8081 || exit 1
 
-    # ------------------------------
-    # 6. SAST – Semgrep
-    # ------------------------------
+    - name: Export image for next jobs
+      run: docker save cortex-pocket:latest > cortex-pocket.tar
+
+    - name: Upload built image
+      uses: actions/upload-artifact@v4
+      with:
+        name: cortex-image
+        path: cortex-pocket.tar
+
+
+  # ==========================================================
+  # 2️⃣ JOB: SAST — ANALISE DE CÓDIGO (SEMGREP)
+  # ==========================================================
+  sast:
+    name: SAST - Semgrep
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v4
+
     - name: Run Semgrep SAST
       uses: returntocorp/semgrep-action@v1
       with:
         config: "p/default"
-        sarif: semgrep.sarif
 
     - name: Upload Semgrep SARIF
       uses: actions/upload-artifact@v4
@@ -65,9 +72,26 @@ jobs:
         name: semgrep-report
         path: semgrep.sarif
 
-    # ------------------------------
-    # 7. SCA – Trivy scan da imagem
-    # ------------------------------
+
+  # ==========================================================
+  # 3️⃣ JOB: SCA — SCAN DE VULNERABILIDADES DA IMAGEM (TRIVY)
+  # ==========================================================
+  sca:
+    name: SCA - Trivy Image Scan
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download built container image
+      uses: actions/download-artifact@v4
+      with:
+        name: cortex-image
+
+    - name: Load docker image
+      run: docker load < cortex-pocket.tar
+
     - name: Install Trivy
       run: |
         sudo apt-get update
@@ -78,21 +102,52 @@ jobs:
     - name: Run Trivy SCA
       run: trivy image --format sarif --output trivy.sarif cortex-pocket:latest
 
-    - name: Upload Trivy SARIF
+    - name: Upload Trivy Report
       uses: actions/upload-artifact@v4
       with:
         name: trivy-report
         path: trivy.sarif
 
-    # ------------------------------
-    # 8. Criar pasta para relatórios do ZAP
-    # ------------------------------
+
+  # ==========================================================
+  # 4️⃣ JOB: DAST — OWASP ZAP SCAN
+  # ==========================================================
+  dast:
+    name: DAST - OWASP ZAP
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download built container image
+      uses: actions/download-artifact@v4
+      with:
+        name: cortex-image
+
+    - name: Load docker image
+      run: docker load < cortex-pocket.tar
+
+    - name: Create Docker network
+      run: docker network create cortexnet
+
+    - name: Run application container
+      run: |
+        docker run -d \
+          --name cortex-pocket-app \
+          --network cortexnet \
+          -p 8081:8081 \
+          cortex-pocket:latest
+
+    - name: Wait for app
+      run: |
+        echo "⏳ Aguardando aplicação para ZAP..."
+        sleep 20
+        curl -I http://localhost:8081 || exit 1
+
     - name: Create reports folder
       run: mkdir zap-reports
 
-    # ------------------------------
-    # 9. DAST – OWASP ZAP
-    # ------------------------------
     - name: Run OWASP ZAP Full Scan
       run: |
         docker run --rm \
@@ -111,5 +166,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: zap-reports
-        path: zap-reports
+        path: zap-reports/
 
