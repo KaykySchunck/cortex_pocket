@@ -137,6 +137,8 @@ RUN echo 'server { \
 
 EXPOSE 8081
 
+USER nginx
+
 # Healthcheck otimizado
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
     CMD wget --quiet --tries=1 --spider http://localhost:8081/ || exit 1
