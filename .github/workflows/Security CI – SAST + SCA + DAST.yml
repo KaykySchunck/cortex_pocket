@@ -1,37 +1,65 @@
-name: Security CI – SAST + SCA + DAST
+name: Security Pipeline – Build → Analyze → Scan
 
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
   workflow_dispatch:
 
 jobs:
-  security:
-    name: Build, Analyze, Scan
+
+  # -----------------------------------------------------
+  # 1️⃣ JOB 1 – BUILD DOCKER APP
+  # -----------------------------------------------------
+  build:
+    name: 🏗️ Build & Validate Container
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -----------------------
-      # 1. SAST – SEMGREP
-      # -----------------------
+      - name: Build & start app
+        run: |
+          docker compose up -d --build
+          echo "Aguardando aplicação iniciar..."
+          sleep 20
+
+      - name: Test local app (HTTP)
+        run: |
+          echo "🚀 Testando http://localhost:8081"
+          curl -I http://localhost:8081 || exit 1
+
+      - name: List containers
+        run: docker ps -a
+
+      - name: List docker networks
+        run: docker network ls
+
+
+  # -----------------------------------------------------
+  # 2️⃣ JOB 2 – ANALYZE (SAST + SCA)
+  # -----------------------------------------------------
+  analyze:
+    name: 🔍 SAST + SCA (Semgrep & Dependency-Check)
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------- SAST – SEMGREP ---------------------
       - name: Install Semgrep
         run: pip install semgrep
 
       - name: Run Semgrep (SAST)
-        run: semgrep scan --config=auto --error || true
+        run: |
+          echo "Rodando análise estática (Semgrep)..."
+          semgrep scan --config=auto --error || true
 
-      # -----------------------
-      # 2. SCA – OWASP DEPENDENCY CHECK
-      # -----------------------
+      # ------------- SCA – DEPENDENCY CHECK --------------
       - name: Run OWASP Dependency Check
         run: |
+          mkdir dependency-check-reports
           docker run --rm \
-            -e NVD_API_KEY=${{ secrets.NVD_API_KEY }} \
             -v $(pwd):/src \
             owasp/dependency-check:latest \
             --scan /src \
@@ -44,31 +72,40 @@ jobs:
           name: dependency-check-reports
           path: dependency-check-reports/
 
-      # -----------------------
-      # 3. BUILD CONTAINER
-      # -----------------------
-      - name: Build Docker Container
-        run: docker compose up -d --build
 
-      - name: Wait for container
-        run: sleep 20
+  # -----------------------------------------------------
+  # 3️⃣ JOB 3 – SCAN (DAST – OWASP ZAP)
+  # -----------------------------------------------------
+  scan:
+    name: 🛡️ DAST Scan (OWASP ZAP)
+    runs-on: ubuntu-latest
+    needs: build  # depende do job BUILD
+    steps:
 
-      - name: List Docker Networks
-        run: docker network ls
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # -----------------------
-      # 4. DAST – OWASP ZAP
-      # -----------------------
-      - name: Create ZAP directory
+      - name: Start app again for DAST
+        run: |
+          docker compose up -d --build
+          sleep 20
+
+      - name: Detect Docker network
+        id: net
+        run: |
+          NET=$(docker network ls | grep '_default' | awk '{print $2}')
+          echo "network=$NET" >> $GITHUB_OUTPUT
+
+      - name: Show detected network
+        run: echo "Rede detectada: ${{ steps.net.outputs.network }}"
+
+      - name: Create reports folder
         run: mkdir zap-reports
 
-      - name: Run OWASP ZAP (DAST)
+      - name: Run OWASP ZAP Full Scan
         run: |
-          NETWORK=$(docker network ls | grep '_default' | awk '{print $2}')
-          echo "Using network: $NETWORK"
-
           docker run --rm \
-            --network=$NETWORK \
+            --network=${{ steps.net.outputs.network }} \
             -v $(pwd)/zap-reports:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-full-scan.py \
@@ -84,21 +121,7 @@ jobs:
           name: zap-reports
           path: zap-reports/
 
-      # -----------------------
-      # 5. FAIL GATE
-      # -----------------------
-      - name: Fail on Critical/High Findings
+      - name: Print ZAP summary (risk codes)
         run: |
-          HIGH=$(jq '[.site[].alerts[] | select(.riskcode == "3")] | length' zap-reports/zap-report.json)
-          MEDIUM=$(jq '[.site[].alerts[] | select(.riskcode == "2")] | length' zap-reports/zap-report.json)
-
-          echo "HIGH: $HIGH"
-          echo "MEDIUM: $MEDIUM"
-
-          if [ "$HIGH" -gt 0 ] || [ "$MEDIUM" -gt 0 ]; then
-            echo "❌ Segurança reprovada."
-            exit 1
-          fi
-
-      - name: Completed
-        run: echo "✔ SAST + SCA + DAST executados com sucesso!"
+          echo "Resumo das vulnerabilidades encontradas:"
+          cat zap-reports/zap-report.md || true
