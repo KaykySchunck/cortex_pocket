@@ -1,0 +1,51 @@
+name: SAST - Semgrep
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ------------------------------
+    # 1. Checkout
+    # ------------------------------
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # ------------------------------
+    # 2. Run Semgrep
+    # ------------------------------
+    - name: Run Semgrep SAST
+      id: semgrep
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: "p/default"       # regras padrões
+        generateSarif: "true"     # exporta SARIF automaticamente
+      env:
+        SEMGREP_RULES: "p/default"
+        SEMGREP_TIMEOUT: "0"      # sem timeout
+
+    # ------------------------------
+    # 3. Upload SARIF para Github Code Scanning
+    # ------------------------------
+    - name: Upload Semgrep SARIF
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: semgrep.sarif
+
+    # ------------------------------
+    # 4. Artefatos (opcional)
+    # ------------------------------
+    - name: Upload Semgrep Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: semgrep-report
+        path: semgrep.sarif
