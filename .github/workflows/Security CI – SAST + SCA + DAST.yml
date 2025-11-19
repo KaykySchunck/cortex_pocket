@@ -1,127 +1,115 @@
-name: Security Pipeline – Build → Analyze → Scan
+name: Security CI (SAST + SCA + DAST)
 
 on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-
-  # -----------------------------------------------------
-  # 1️⃣ JOB 1 – BUILD DOCKER APP
-  # -----------------------------------------------------
-  build:
-    name: 🏗️ Build & Validate Container
+  security:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    # ------------------------------
+    # 1. Checkout do código
+    # ------------------------------
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Build & start app
-        run: |
-          docker compose up -d --build
-          echo "Aguardando aplicação iniciar..."
-          sleep 20
+    # ------------------------------
+    # 2. Criar rede Docker
+    # ------------------------------
+    - name: Create Docker network
+      run: docker network create cortexnet
 
-      - name: Test local app (HTTP)
-        run: |
-          echo "🚀 Testando http://localhost:8081"
-          curl -I http://localhost:8081 || exit 1
+    # ------------------------------
+    # 3. Build da imagem do seu projeto
+    # ------------------------------
+    - name: Build Cortex Pocket image
+      run: docker build -t cortex-pocket:latest .
 
-      - name: List containers
-        run: docker ps -a
+    # ------------------------------
+    # 4. Subir container da aplicação
+    # ------------------------------
+    - name: Run application container
+      run: |
+        docker run -d \
+          --name cortex-pocket-app \
+          --network cortexnet \
+          -p 8081:8081 \
+          cortex-pocket:latest
 
-      - name: List docker networks
-        run: docker network ls
+    # ------------------------------
+    # 5. Aguardar app iniciar
+    # ------------------------------
+    - name: Wait for app
+      run: |
+        echo "Aguardando aplicação subir..."
+        sleep 20
+        curl -I http://localhost:8081 || exit 1
 
+    # ------------------------------
+    # 6. SAST – Semgrep
+    # ------------------------------
+    - name: Run Semgrep SAST
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: "p/default"
+        sarif: semgrep.sarif
 
-  # -----------------------------------------------------
-  # 2️⃣ JOB 2 – ANALYZE (SAST + SCA)
-  # -----------------------------------------------------
-  analyze:
-    name: 🔍 SAST + SCA (Semgrep & Dependency-Check)
-    runs-on: ubuntu-latest
-    needs: build
+    - name: Upload Semgrep SARIF
+      uses: actions/upload-artifact@v4
+      with:
+        name: semgrep-report
+        path: semgrep.sarif
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    # ------------------------------
+    # 7. SCA – Trivy scan da imagem
+    # ------------------------------
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget
+        wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.1_Linux-64bit.deb
+        sudo dpkg -i trivy_0.51.1_Linux-64bit.deb
 
-      # ------------- SAST – SEMGREP ---------------------
-      - name: Install Semgrep
-        run: pip install semgrep
+    - name: Run Trivy SCA
+      run: trivy image --format sarif --output trivy.sarif cortex-pocket:latest
 
-      - name: Run Semgrep (SAST)
-        run: |
-          echo "Rodando análise estática (Semgrep)..."
-          semgrep scan --config=auto --error || true
+    - name: Upload Trivy SARIF
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-report
+        path: trivy.sarif
 
-      # ------------- SCA – DEPENDENCY CHECK --------------
-      - name: Run OWASP Dependency Check
-        run: |
-          mkdir dependency-check-reports
-          docker run --rm \
-            -v $(pwd):/src \
-            owasp/dependency-check:latest \
-            --scan /src \
-            --format "ALL" \
-            --out /src/dependency-check-reports
+    # ------------------------------
+    # 8. Criar pasta para relatórios do ZAP
+    # ------------------------------
+    - name: Create reports folder
+      run: mkdir zap-reports
 
-      - name: Upload SCA Reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-reports
-          path: dependency-check-reports/
+    # ------------------------------
+    # 9. DAST – OWASP ZAP
+    # ------------------------------
+    - name: Run OWASP ZAP Full Scan
+      run: |
+        docker run --rm \
+          --network=cortexnet \
+          -v $(pwd)/zap-reports:/zap/wrk \
+          ghcr.io/zaproxy/zaproxy:stable \
+          zap-full-scan.py \
+          -t http://cortex-pocket-app:8081 \
+          -d \
+          -r zap-report.html \
+          -w zap-report.md \
+          -J zap-report.json \
+          -x zap-report.xml
 
+    - name: Upload ZAP Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: zap-reports
+        path: zap-reports
 
-  # -----------------------------------------------------
-  # 3️⃣ JOB 3 – SCAN (DAST – OWASP ZAP)
-  # -----------------------------------------------------
-  scan:
-    name: 🛡️ DAST Scan (OWASP ZAP)
-    runs-on: ubuntu-latest
-    needs: build  # depende do job BUILD
-    steps:
-
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Start app again for DAST
-        run: |
-          docker compose up -d --build
-          sleep 20
-
-      - name: Detect Docker network
-        id: net
-        run: |
-          NET=$(docker network ls | grep '_default' | awk '{print $2}')
-          echo "network=$NET" >> $GITHUB_OUTPUT
-
-      - name: Show detected network
-        run: echo "Rede detectada: ${{ steps.net.outputs.network }}"
-
-      - name: Create reports folder
-        run: mkdir zap-reports
-
-      - name: Run OWASP ZAP Full Scan
-        run: |
-          docker run --rm \
-            --network=${{ steps.net.outputs.network }} \
-            -v $(pwd)/zap-reports:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable \
-            zap-full-scan.py \
-            -t http://cortex-pocket-app:8081 \
-            -r zap-report.html \
-            -w zap-report.md \
-            -J zap-report.json \
-            -x zap-report.xml
-
-      - name: Upload ZAP Reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-reports
-          path: zap-reports/
-
-      - name: Print ZAP summary (risk codes)
-        run: |
-          echo "Resumo das vulnerabilidades encontradas:"
-          cat zap-reports/zap-report.md || true
