@@ -1,11 +1,19 @@
-version: "3.9"
-
 services:
   cortex-app:
-    build: .
     container_name: cortex-pocket-app
+    image: cortex-pocket:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8081:8081"
     restart: unless-stopped
-
-#
+    labels:
+      - "com.cortexpocket.name=cortex-pocket"
+      - "com.cortexpocket.description=Plataforma de Reskilling e Qualificação"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8081 || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
