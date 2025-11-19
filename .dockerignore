@@ -1,16 +1,53 @@
+# Dependências
 node_modules
 npm-debug.log
+yarn-error.log
+package-lock.json.bak
+
+# Git
 .git
 .gitignore
+.gitattributes
+
+# Documentação
 README.md
+*.md
+
+# Variáveis de ambiente
 .env
 .env.local
+.env.*.local
+
+# Expo
 .expo
 .expo-shared
+.expo-shared/
+
+# Builds anteriores
 dist
 web-build
 build
 *.log
+
+# Sistema
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode
+.idea
+*.iml
+
+# Testes
+coverage
+.nyc_output
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
 
 
