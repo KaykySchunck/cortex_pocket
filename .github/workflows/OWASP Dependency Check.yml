@@ -1,0 +1,67 @@
+name: SCA - OWASP Dependency Check
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  sca:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ------------------------------
+    # 1. Checkout
+    # ------------------------------
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # ------------------------------
+    # 2. Criar pasta de relatórios
+    # ------------------------------
+    - name: Create reports folder
+      run: mkdir -p odc-reports
+
+    # ------------------------------
+    # 3. Rodar OWASP Dependency Check
+    # ------------------------------
+    - name: Run OWASP Dependency Check
+      run: |
+        docker run --rm \
+          --volume "$(pwd)":/src \
+          --volume "$(pwd)/odc-reports":/report \
+          owasp/dependency-check:latest \
+          --scan /src \
+          --out /report \
+          --format ALL \
+          --prettyPrint \
+          --enableExperimental
+
+    # ------------------------------
+    # 4. Upload dos relatórios
+    # ------------------------------
+    - name: Upload Dependency Check Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-check-reports
+        path: odc-reports/
+
+    # ------------------------------
+    # 5. (OPCIONAL) Falhar se achar vulnerabilidades altas
+    # ------------------------------
+    - name: Fail on HIGH/CRITICAL vulnerabilities
+      run: |
+        CRITICAL=$(grep -o '"severity": "Critical"' odc-reports/dependency-check-report.json | wc -l)
+        HIGH=$(grep -o '"severity": "High"' odc-reports/dependency-check-report.json | wc -l)
+
+        echo "Critical findings: $CRITICAL"
+        echo "High findings: $HIGH"
+
+        if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+          echo "❌ Vulnerabilities found (HIGH/CRITICAL). Failing pipeline."
+          exit 1
+        else
+          echo "✅ No high/critical vulnerabilities detected."
+        fi
