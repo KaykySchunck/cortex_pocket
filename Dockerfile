@@ -1,5 +1,5 @@
 # ---------------------------------------------------
-# STAGE 1 – BUILD DO EXPO WEB
+# STAGE 1 – BUILD DO EXPO WEB #
 # ---------------------------------------------------
 FROM node:20-bullseye AS builder
 
