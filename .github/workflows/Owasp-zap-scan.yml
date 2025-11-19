@@ -9,16 +9,13 @@ on:
 
 jobs:
 
-  # ----------------------------------------------------
-  # 1. Subir a aplicação containerizada com Docker Compose
-  # ----------------------------------------------------
   start_app:
     name: Start Application Container
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Start application with Docker Compose
         run: |
@@ -30,9 +27,6 @@ jobs:
         run: |
           curl -I http://localhost:8081 || exit 1
 
-  # ----------------------------------------------------
-  # 2. DAST – OWASP ZAP FULL SCAN EM DOCKER
-  # ----------------------------------------------------
   zap_scan:
     name: OWASP ZAP DAST Scan
     needs: start_app
@@ -40,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create reports directory
         run: mkdir zap-reports
@@ -57,18 +51,14 @@ jobs:
             -w zap-report.md \
             -J zap-report.json \
             -x zap-report.xml \
-            -g zap-conf.conf \
             -d
 
       - name: Upload ZAP Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: zap-reports
           path: zap-reports/
 
-      # -------------------------------------------
-      # Falhar pipeline em vulnerabilidades críticas ou médias
-      # -------------------------------------------
       - name: Fail on HIGH or MEDIUM findings
         run: |
           HIGH=$(jq '[.site[].alerts[] | select(.riskcode == "3")] | length' zap-reports/zap-report.json)
@@ -82,9 +72,6 @@ jobs:
             exit 1
           fi
 
-  # ----------------------------------------------------
-  # 3. Gate Final – aprovado
-  # ----------------------------------------------------
   summary:
     name: Summary
     runs-on: ubuntu-latest
