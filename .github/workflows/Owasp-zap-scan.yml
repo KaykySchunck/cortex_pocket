@@ -1,0 +1,94 @@
+name: Owasp-zap-scan
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'cortex-pocket/**'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: cortex-pocket
+  REGISTRY: ghcr.io
+  REGISTRY_IMAGE: ${{ secrets.GITHUB_REPOSITORY }}/cortex-pocket
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      working-directory: ./cortex-pocket
+      run: |
+        docker build \
+          --tag ${{ env.IMAGE_NAME }}:latest \
+          --tag ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          --tag ${{ env.REGISTRY_IMAGE }}:latest \
+          --tag ${{ env.REGISTRY_IMAGE }}:${{ github.sha }} \
+          .
+    
+    - name: Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: '${{ env.IMAGE_NAME }}:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+        scanners: 'vuln,config,secret'
+    
+    - name: Upload Trivy results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        category: 'docker-scan'
+    
+    - name: Generate Trivy HTML report
+      uses: aquasecurity/trivy-action@master
+      if: always()
+      with:
+        image-ref: '${{ env.IMAGE_NAME }}:latest'
+        format: 'template'
+        template: '@contrib/html.tpl'
+        output: 'trivy-report.html'
+        severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+    
+    - name: Upload Trivy HTML report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: trivy-security-report
+        path: trivy-report.html
+        retention-days: 30
+    
+    - name: Login to GitHub Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Push image to registry
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      run: |
+        docker push ${{ env.REGISTRY_IMAGE }}:latest
+        docker push ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}
+    
+    - name: Docker Scout CVEs
+      if: always()
+      continue-on-error: true
+      run: |
+        docker scout cves ${{ env.IMAGE_NAME }}:latest
