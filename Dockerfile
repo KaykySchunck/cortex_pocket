@@ -146,4 +146,6 @@ LABEL maintainer="Cortex Pocket Team" \
       description="Plataforma de Reskilling e Qualificação" \
       version="1.0.0"
 
+USER nginx      
+
 CMD ["nginx", "-g", "daemon off;"]
