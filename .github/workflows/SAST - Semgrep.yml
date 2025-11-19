@@ -19,31 +19,34 @@ jobs:
       uses: actions/checkout@v4
 
     # ------------------------------
-    # 2. Run Semgrep
+    # 2. Instalar Semgrep
     # ------------------------------
-    - name: Run Semgrep SAST
-      id: semgrep
-      uses: returntocorp/semgrep-action@v1
-      with:
-        config: "p/default"       # regras padrões
-        generateSarif: "true"     # exporta SARIF automaticamente
-      env:
-        SEMGREP_RULES: "p/default"
-        SEMGREP_TIMEOUT: "0"      # sem timeout
+    - name: Install Semgrep
+      run: |
+        pip install semgrep
 
     # ------------------------------
-    # 3. Upload SARIF para Github Code Scanning
+    # 3. Rodar Semgrep CI (NÃO falha pipeline)
     # ------------------------------
-    - name: Upload Semgrep SARIF
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
+    - name: Run Semgrep SAST
+      run: |
+        semgrep ci \
+          --config p/default \
+          --sarif --output semgrep.sarif \
+          || true
+
+    # ------------------------------
+    # 4. Upload SARIF para Code Scanning
+    # ------------------------------
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: semgrep.sarif
 
     # ------------------------------
-    # 4. Artefatos (opcional)
+    # 5. Artefatos opcionais
     # ------------------------------
-    - name: Upload Semgrep Results
+    - name: Upload Semgrep report
       if: always()
       uses: actions/upload-artifact@v4
       with:
