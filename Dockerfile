@@ -144,8 +144,6 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
 # Labels para identificação
 LABEL maintainer="Cortex Pocket Team" \
       description="Plataforma de Reskilling e Qualificação" \
-      version="1.0.0"
-
-USER nginx      
+      version="1.0.0"     
 
 CMD ["nginx", "-g", "daemon off;"]
