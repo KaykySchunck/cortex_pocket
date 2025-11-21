@@ -32,7 +32,7 @@ jobs:
           --format XML \
           --format JSON \
           --prettyPrint \
-          --nvdApiKey ${{ secrets.NVD_API_KEY }}
+          --enableExperimental
 
     - name: Upload Dependency Check Reports
       uses: actions/upload-artifact@v4
