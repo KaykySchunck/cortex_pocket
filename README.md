@@ -158,10 +158,5 @@ cortex-pocket/
 - ✅ **Criatividade**: Gamificação e microlearning para engajamento
 - ✅ **Simplicidade**: Solução funcional e direta ao ponto
 
-## 📄 Licença
-
-MIT License - Sinta-se livre para usar e modificar
-
----
 
 **Desenvolvido para preparar profissionais para o futuro do trabalho** 🚀
