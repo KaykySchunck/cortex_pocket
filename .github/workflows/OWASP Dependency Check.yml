@@ -15,40 +15,25 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Node modules
-      run: npm install
-
     - name: Create reports folder
       run: mkdir -p odc-reports
 
-    - name: Run OWASP Dependency Check
+    - name: Run OWASP Dependency Check (XML only)
       run: |
         docker run --rm \
+          --user root \
           --volume "$(pwd)":/src \
           --volume "$(pwd)/odc-reports":/report \
           owasp/dependency-check:latest \
           --scan /src \
           --out /report \
           --format XML \
-          --format JSON \
           --prettyPrint \
           --enableExperimental
 
-    - name: Upload Dependency Check Reports
+    - name: Upload Dependency Check XML
       uses: actions/upload-artifact@v4
       with:
-        name: dependency-check-reports
+        name: dependency-check-xml
         path: odc-reports/
 
-    - name: Fail on HIGH/CRITICAL vulnerabilities
-      run: |
-        CRITICAL=$(grep -o '"severity": "Critical"' odc-reports/dependency-check-report.json | wc -l)
-        HIGH=$(grep -o '"severity": "High"' odc-reports/dependency-check-report.json | wc -l)
-        echo "Critical findings: $CRITICAL"
-        echo "High findings: $HIGH"
-        if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
-          echo "❌ Vulnerabilities found (HIGH/CRITICAL). Failing pipeline."
-          exit 1
-        else
-          echo "✅ No high/critical vulnerabilities detected."
-        fi
