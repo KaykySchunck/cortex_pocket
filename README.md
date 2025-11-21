@@ -1,162 +1,230 @@
-# 🧠 Cortex Pocket
-  Desenvolvedores: RM99756 Kayky Oliveira Schunck - RM99902 Leonardo Schunck Rainha
-> Plataforma de Reskilling e Qualificação para o Futuro do Trabalho
+🎯 Alinhamento ao Tema: O Futuro do Trabalho
+Como o Cortex Pocket responde aos desafios atuais:
+✅ Reskilling e Requalificação
 
-Cortex Pocket é uma solução mobile que utiliza **gamificação e microlearning** para preparar profissionais para as transformações digitais. O app foca em **reskilling** (requalificação) através de perguntas interativas sobre tecnologias emergentes, ajudando pessoas a se adaptarem às novas demandas do mercado e empresas a formarem equipes preparadas para os novos tempos.
+Conteúdos sobre IA, Cloud, IoT, Blockchain, Segurança, APIs, TI Verde e mais.
 
-## 🎯 Alinhamento com o Tema: "O Futuro do Trabalho"
+Mapeamento de competências com XP, níveis e progresso visual.
 
-### Como Resolvemos os Desafios Propostos:
+Ajuda profissionais e empresas a acompanhar carreiras em transformação.
 
-#### ✅ **Reskilling e Requalificação**
-- Plataforma focada em tecnologias emergentes (IA, Cloud, Blockchain, IoT)
-- Sistema de progresso que mapeia competências adquiridas
-- Preparação para carreiras que ainda não existem
+✅ Novas Formas de Aprender
 
-#### ✅ **Novas Formas de Aprendizado**
-- **Gamificação**: Sistema de XP, níveis e conquistas
-- **Microlearning**: Sessões de 10 perguntas por tópico
-- **Aprendizado Adaptativo**: Progresso salvo e rastreável
+Gamificação: XP, níveis, conquistas.
 
-#### ✅ **IA como Parceira do Ser Humano**
-- Conteúdo sobre IA Generativa e Automação Inteligente
-- Ensina como usar IA para aumentar produtividade
-- Exemplos práticos de empresas que utilizam IA no trabalho
+Microlearning: sessões de 10 perguntas por tema.
 
-#### ✅ **Ambientes Híbridos/Remotos**
-- App multiplataforma (mobile e web) - funciona em qualquer lugar
-- Aprendizado assíncrono, no ritmo do usuário
-- Acessível de casa, escritório ou em trânsito
+Explicações inteligentes: por que a resposta certa é certa e as erradas são erradas.
 
-#### ✅ **Oportunidades Justas, Inclusivas e Sustentáveis**
-- **Acesso Gratuito**: Qualquer pessoa pode aprender
-- **Inclusão Digital**: Democratiza conhecimento sobre tecnologias críticas
-- **Preparação Empresarial**: Ajuda empresas a qualificar equipes
+✅ IA como Parceira do Humano
 
-## 🚀 Tecnologias Utilizadas
+Conteúdo sobre IA generativa, ética, governança e automação inteligente.
 
-### Linguagem e Framework
-- **TypeScript** `5.9.2` - Tipagem estática para maior confiabilidade
-- **React Native** `0.81.5` - Desenvolvimento multiplataforma (iOS, Android, Web)
-- **React** `19.1.0` - Biblioteca para construção de interfaces
-- **Expo** `54.0.23` - Plataforma de desenvolvimento e deploy
+Exemplos práticos de uso no mercado de trabalho.
 
-### Persistência de Dados (Requisito Obrigatório)
-- **AsyncStorage** (`@react-native-async-storage/async-storage`) - Armazenamento local persistente
-  - ✅ Salva progresso do usuário (XP, nível, missões concluídas)
-  - ✅ Persistência entre sessões sem necessidade de backend
-  - ✅ Dados armazenados localmente no dispositivo
-  - ✅ Implementação completa de CRUD (Create, Read, Update, Delete)
+✅ Ambientes Híbridos e Remotos
 
-### Navegação
-- **React Navigation** - Sistema de navegação entre telas
-- **Stack Navigator** - Navegação em pilha para fluxo linear
+Funciona no celular, computador e navegador.
 
-## 📱 Funcionalidades do App
+Aprendizagem assíncrona, acessível, no ritmo do usuário.
 
-### 🏠 Tela Inicial - Dashboard de Reskilling
-- **Progresso de Qualificação**: Visualize seu nível, XP acumulado e competências desenvolvidas
-- **Mapeamento de Tópicos**: 10 temas críticos organizados por categoria:
-  - **IA & Automação**: IA Generativa, Automação Inteligente no Trabalho
-  - **Dados, Ética & Governança**: LGPD/GDPR, Ética e Viés em IA
-  - **Operações Digitais**: Cloud e Custos, IoT, TI Verde
-  - **Segurança & Integração**: Cibersegurança, APIs e Integração
-  - **Inovação & Web3**: Blockchain e Tecnologias Emergentes
-- **Indicador de Progresso**: Veja quantas perguntas você já respondeu de cada tema (X/10)
+✅ Oportunidades Justas, Inclusivas e Sustentáveis
 
-### 📚 Sessão de Aprendizado - Microlearning
-- **10 Perguntas por Tópico**: Sessões focadas para aprendizado eficiente
-- **Feedback Imediato**: Respostas corretas/incorretas com feedback visual
-- **Explicações Detalhadas**: Após cada resposta, você aprende:
-  - ✅ Por que a resposta correta está certa
-  - ❌ Por que as outras alternativas estão erradas
-  - 🌍 Exemplos do mundo real de aplicação no trabalho
-  - 🏢 Empresas que utilizam essa tecnologia
-- **Progresso Visual**: "Pergunta X de Y" e "Restam Z perguntas neste tema"
+100% gratuito
 
-### 👤 Perfil e Estatísticas - Rastreamento de Competências
-- **Sistema de Níveis** (mapeamento de progresso):
-  - 🟢 **Iniciante** (0-99 XP) - Iniciando jornada de reskilling
-  - 🟡 **Explorador** (100-249 XP) - Expandindo conhecimentos
-  - 🔴 **Futurista** (250+ XP) - Preparado para o futuro do trabalho
-- **Histórico de Missões**: Veja todas as competências desenvolvidas
-- **Refazer Missões**: Revise tópicos já completados para reforçar aprendizado
-- **Reset de Progresso**: Comece do zero quando quiser
+Democratiza conhecimento sobre tecnologias críticas
 
-### 🎮 Gamificação - Engajamento e Motivação
-- **Sistema de XP**: Ganhe 10 XP por pergunta respondida corretamente
-- **Progresso Persistente**: Seu avanço é salvo automaticamente no AsyncStorage
-- **Conquistas Visuais**: Acompanhe sua evolução através dos níveis
+Ideal para equipes corporativas e estudantes que querem se preparar
 
-## 🛠️ Como Executar
+🛠️ Tecnologias Utilizadas
+Linguagens e Frameworks
 
-### Pré-requisitos
-- Node.js 18+
-- npm, yarn ou pnpm
-- Expo Go (para testar no celular) ou Android Studio / Xcode (para emuladores)
+React Native 0.81.5 — Multiplataforma (iOS, Android, Web)
 
-### Instalação
+TypeScript 5.9.2 — Tipagem estática
 
-```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/cortex-pocket.git
-cd cortex-pocket
+React 19.1.0 — Interfaces reativas
 
-# Instale as dependências
-npm install
-```
+Expo 54.0.23 — Facilita desenvolvimento e deploy
 
-### Executar
+Persistência de Dados (Requisito Obrigatório atendido)
 
-```bash
-# Iniciar servidor de desenvolvimento
-npm start
+AsyncStorage – CRUD completo:
 
-# Executar no iOS (requer macOS)
-npm run ios
+✔️ Salva XP, nível e progresso
 
-# Executar no Android
-npm run android
+✔️ Atualiza missões e temas concluídos
 
-# Executar na Web
-npm run web
-```
+✔️ Carrega dados automaticamente
 
-### Testar no Celular
-1. Instale o app **Expo Go** ([iOS](https://apps.apple.com/app/expo-go/id982107779) | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent))
-2. Execute `npm start`
-3. Escaneie o QR code com o Expo Go
+✔️ Permite reset de conta
 
-## 📁 Estrutura do Projeto
+✔️ Sem necessidade de backend
 
-```
+Navegação
+
+React Navigation
+
+Stack Navigator para fluxo linear e intuitivo
+
+📱 Funcionalidades do Aplicativo
+🏠 Dashboard de Reskilling
+
+Exibe XP, nível e competências desenvolvidas
+
+10 tópicos críticos organizados por categoria
+
+Progresso de cada tema (X/10 perguntas)
+
+📚 Sessões de Microlearning
+
+10 perguntas por tema
+
+Feedback imediato
+
+Explicações completas
+
+Exemplos reais de empresas (Google, IBM, Tesla, Nubank, AWS etc.)
+
+👤 Perfil & Estatísticas
+
+3 níveis de evolução:
+
+🟢 Iniciante: 0–99 XP
+
+🟡 Explorador: 100–249 XP
+
+🔴 Futurista: 250+ XP
+
+Histórico de missões
+
+Refazer tópicos
+
+Reset geral de progresso
+
+🎮 Gamificação
+
++10 XP por resposta certa
+
+Conquistas visuais
+
+Progresso salvo automaticamente
+
+📁 Estrutura do Projeto
 cortex-pocket/
 ├── cortex/
-│   ├── App.tsx              # Componente raiz
+│   ├── App.tsx                      # App principal
 │   └── src/
-│       ├── AppNavigator.tsx # Configuração de navegação
-│       ├── components/      # Componentes reutilizáveis
-│       ├── data/            # 100 perguntas + explicações
-│       ├── screens/         # Telas (Home, Mission, Profile)
-│       └── storage/         # Gerenciamento AsyncStorage
+│       ├── AppNavigator.tsx         # Navegação
+│       ├── components/              # Componentes globais
+│       │   ├── Header.tsx
+│       │   ├── MissionList.tsx
+│       │   ├── ConfirmModal.tsx
+│       │   └── WelcomeModal.tsx
+│       ├── data/                    # Conteúdo educacional
+│       │   ├── questions.ts         # 100 perguntas
+│       │   ├── explanations.ts      # Explicações detalhadas
+│       │   └── topics.ts            # Tópicos e categorias
+│       ├── screens/                 # Telas principais
+│       │   ├── HomeScreen.tsx
+│       │   ├── MissionScreen.tsx
+│       │   └── ProfileScreen.tsx
+│       └── storage/
+│           └── userStorage.ts       # AsyncStorage (CRUD)
+├── Dockerfile                       # Deploy
+├── docker-compose.yml
+├── index.js
 ├── package.json
-└── app.json
-```
+├── app.json
+└── README.md
 
-## 🎯 Conteúdo Educacional
+🧩 Conteúdo Educacional
 
-- **10 Tópicos Críticos** sobre tecnologias emergentes do futuro do trabalho
-- **100 Perguntas** com explicações detalhadas
-- **Exemplos Reais** de aplicação no mundo corporativo
-- **Empresas de Referência** que utilizam cada tecnologia
+100 perguntas distribuídas em 10 tópicos:
 
-## ✅ Atendimento aos Requisitos Técnicos
+IA & Automação
 
-- ✅ **React Native**: Aplicativo desenvolvido em React Native
-- ✅ **AsyncStorage**: Persistência completa de dados localmente
-- ✅ **Tema "O Futuro do Trabalho"**: Solução focada em reskilling e preparação profissional
-- ✅ **Criatividade**: Gamificação e microlearning para engajamento
-- ✅ **Simplicidade**: Solução funcional e direta ao ponto
+IA Generativa
+
+Automação Inteligente
+
+Dados & Governança
+
+LGPD/GDPR
+
+Ética e Viés em IA
+
+Operações Digitais
+
+Cloud Computing
+
+IoT
+
+TI Verde
+
+Segurança & Integração
+
+Cibersegurança
+
+APIs
+
+Inovação & Web3
+
+Blockchain
+
+Tecnologias emergentes
+
+Cada pergunta possui:
+
+Explicação do acerto
+
+Por que as alternativas estavam erradas
+
+Caso real de aplicação no mercado
+
+🚀 Instalação
+git clone <url-do-repositorio>
+cd cortex-pocket
+npm install
+npm start
+
+▶️ Como Executar
+No Desenvolvimento Local
+npm start
+npm run ios
+npm run android
+npm run web
+
+Testar no Celular
+
+Baixe o Expo Go
+
+Rode npm start
+
+Escaneie o QR Code
+
+🐳 Docker (Produção)
+docker compose up -d --build
+docker compose logs -f
+docker compose down
 
 
-**Desenvolvido para preparar profissionais para o futuro do trabalho** 🚀
+Aplicação disponível em:
+http://localhost:8081
+
+✅ Requisitos Técnicos Atendidos
+✔️ React Native
+✔️ Persistência (AsyncStorage + CRUD completo)
+✔️ Tema “Futuro do Trabalho”
+✔️ Microlearning
+✔️ Gamificação
+✔️ Multiplataforma
+✔️ 100 perguntas + explicações
+👥 Sobre
+
+Projeto desenvolvido para a disciplina Desenvolvimento Mobile – FIAP
+Criado por:
+
+RM99756 – Kayky Oliveira Schunck
+
+RM99902 – Leonardo Schunck Rainha
